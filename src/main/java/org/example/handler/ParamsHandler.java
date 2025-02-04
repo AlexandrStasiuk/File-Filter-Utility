@@ -7,31 +7,26 @@ import org.example.validator.ArgsValidator;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import static org.example.constant.OptionConstant.*;
 
 @Slf4j
-public class ParamsHandler{
+public class ParamsHandler {
 
     public static Params parse(String[] args) throws ParseException {
         CommandLine commandLine = parseArgs(args);
-        ArgsValidator argsValidator = new ArgsValidator();
 
         List<String> filePaths = commandLine.getArgList();
+        String outputPath = Optional.ofNullable(commandLine.getOptionValue(O_OPT)).orElse("");
+        String prefix = Optional.ofNullable(commandLine.getOptionValue(P_OPT)).orElse("");
+
+        ArgsValidator argsValidator = new ArgsValidator();
         argsValidator.validateFiles(filePaths);
+        argsValidator.validateOutputPath(outputPath);
+        argsValidator.validatePrefix(prefix);
+
         log.info("Files transferred for filtering: {}", filePaths);
-
-        String outputPath = commandLine.getOptionValue(O_OPT);
-        if (outputPath != null) {
-            argsValidator.validateOutputPath(outputPath);
-        }else
-            outputPath = "";
-
-        String prefix = commandLine.getOptionValue(P_OPT);
-        if (prefix != null) {
-            argsValidator.validatePrefix(prefix);
-        }else
-            prefix = "";
 
         return new Params(
                 outputPath,
@@ -47,11 +42,11 @@ public class ParamsHandler{
         Options options = defineOptions();
         try {
             CommandLine commandLine = new DefaultParser().parse(options, args);
-            if(commandLine.getArgList().isEmpty())
+            if (commandLine.getArgList().isEmpty())
                 throw new ParseException("You must add at least 1 file");
             return commandLine;
         } catch (ParseException e) {
-            if(args.length > 0)
+            if (args.length > 0)
                 log.error(e.getMessage());
             else
                 new HelpFormatter().printHelp("app <options> file1.txt file2.txt ... fileN.txt", options);
@@ -59,7 +54,7 @@ public class ParamsHandler{
         }
     }
 
-    private static Options defineOptions(){
+    private static Options defineOptions() {
         return new Options()
                 .addOption(new Option(O_OPT, true, "Set the path for the results"))
                 .addOption(new Option(P_OPT, true, "Set a name prefix for output files"))
